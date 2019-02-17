@@ -7,6 +7,9 @@
 #include "Lexer.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+
+const int cnMaxInputlineSize = 10240;
 
 int yyparse(SExpression **expression, yyscan_t scanner);
 
@@ -50,12 +53,37 @@ int evaluate(SExpression *e)
     }
 }
 
-int main(void)
+char* getsource (
+   FILE* in
+)
 {
-    char test[] = " 4 + 2*10 + 3*( 5 + 1 )";
-    SExpression *e = getAST(test);
-    int result = evaluate(e);
-    printf("Result of '%s' is %d\n", test, result);
-    deleteExpression(e);
-    return 0;
+   char acInputline[cnMaxInputlineSize] = "";
+   char* apszOutputlines[];
+   int nNumberoflines = 0;
+   while (fgets(acInputline, cnMaxInputlineSize, in) != NULL)
+      {
+         if ((apszOutputlines[nNumberoflines] = (char *) malloc (sizeof(char) * (strlen(acInputline) + 1))) != NULL)
+            strcpy (apszOutputlines[nNumberoflines++], acInputline);
+           else {
+              fprintf (stderr, "Error: out of memory\n");
+              exit 1;
+           }
+      }
+   return apszOutputlines;
+}
+
+int main (
+   int nArgc,
+   char* apszArgument[]
+)
+{
+   int nReturnCode = 0;
+
+   char* test[] = getsource(stdin);
+   SExpression *e = getAST(test);
+   int result = evaluate(e);
+   printf("Result of '%s' is %d\n", test, result);
+   deleteExpression(e);
+
+   return nReturnCode;
 }
